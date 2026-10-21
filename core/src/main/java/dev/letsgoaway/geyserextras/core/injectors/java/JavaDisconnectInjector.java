@@ -14,11 +14,13 @@ import static dev.letsgoaway.geyserextras.core.GeyserExtras.GE;
 public class JavaDisconnectInjector extends PacketTranslator<ClientboundDisconnectPacket> {
     @Override
     public void translate(GeyserSession session, ClientboundDisconnectPacket packet) {
-        if (GE.getConfig().isAutoReconnect()) {
+        if (GE.getConfig() != null && GE.getConfig().isAutoReconnect()) {
             ExtrasPlayer player = ExtrasPlayer.get(session);
+            if (player == null) {
+                return;
+            }
 
             player.sendToast("", MessageTranslator.convertMessage(packet.getReason(), session.locale()));
-
             player.reconnect();
         }
     }

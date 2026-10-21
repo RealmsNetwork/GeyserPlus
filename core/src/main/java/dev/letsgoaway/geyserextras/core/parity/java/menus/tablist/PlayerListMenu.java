@@ -1,6 +1,9 @@
 package dev.letsgoaway.geyserextras.core.parity.java.menus.tablist;
 
+import static dev.letsgoaway.geyserextras.core.GeyserExtras.GE;
+
 import dev.letsgoaway.geyserextras.core.ExtrasPlayer;
+import dev.letsgoaway.geyserextras.core.menus.MenuButtonFactory;
 import dev.letsgoaway.geyserextras.core.form.BedrockMenu;
 import dev.letsgoaway.geyserextras.core.form.elements.Button;
 import dev.letsgoaway.geyserextras.core.utils.IdUtils;
@@ -18,12 +21,12 @@ public class PlayerListMenu extends BedrockMenu {
 
     @Override
     public SimpleForm create(ExtrasPlayer player) {
-        setTitle(player.translate("key.playerlist"));
-        setHeader(player.getTabListData().getHeader() + "\n\n" + player.getTabListData().getFooter());
+        setTitle(GE.getConfig().menuTitle("player-list", player.translate("key.playerlist")));
+        setHeader(GE.getConfig().menuContent("player-list", player.getTabListData().getHeader() + "\n\n" + player.getTabListData().getFooter()));
         for (PlayerListEntry entry : player.getTabListData().getPlayers().values()) {
             if (entry.isListed()) {
                 String name = fixUnreadable(createPlayerName(entry));
-                add(new Button(name, FormImage.Type.URL, TabListData.getPlayerListHead(entry), () -> {
+                Button configuredPlayerButton = MenuButtonFactory.create(player, "player-list.player", 100, name, FormImage.Type.URL, TabListData.getPlayerListHead(entry), () -> {
                     // Show the user profile menu if it is a bedrock player.
                     long XUID = IdUtils.getBedrockXUID(entry.getProfileId());
                     if (XUID != -1) {
@@ -34,7 +37,8 @@ public class PlayerListMenu extends BedrockMenu {
                         // Otherwise refresh the menu
                         player.sendForm(new PlayerListMenu());
                     }
-                }));
+                });
+                if (configuredPlayerButton != null) add(configuredPlayerButton);
             }
         }
 

@@ -1,6 +1,9 @@
 package dev.letsgoaway.geyserextras.core.parity.java.menus.packs;
 
+import static dev.letsgoaway.geyserextras.core.GeyserExtras.GE;
+
 import dev.letsgoaway.geyserextras.core.ExtrasPlayer;
+import dev.letsgoaway.geyserextras.core.menus.MenuButtonFactory;
 import dev.letsgoaway.geyserextras.core.form.BedrockMenu;
 import dev.letsgoaway.geyserextras.core.form.elements.Button;
 import dev.letsgoaway.geyserextras.core.locale.BedrockLocale;
@@ -16,28 +19,30 @@ public class PackMenu extends BedrockMenu {
 
     @Override
     public SimpleForm create(ExtrasPlayer player) {
-        setTitle(BedrockLocale.MENU.RESOURCE_PACKS);
+        setTitle(GE.getConfig().menuTitle("packs", BedrockLocale.MENU.RESOURCE_PACKS));
 
-        add(new Button(ChatColor.BOLD + player.translate("pack.selected.title"), () -> {
-            player.sendForm(new PackMenu());
-        }));
+        int order = 10;
+        MenuButtonFactory.add(this, player, "packs.selected", order, ChatColor.BOLD + player.translate("pack.selected.title"), null, null, () -> player.sendForm(new PackMenu()));
+        order += 10;
 
         List<UUID> selectedPacks = player.getPreferences().getSelectedPacks();
-
-
         for (UUID uuid : selectedPacks) {
-            createPackButton(PackLoader.PACKS.get(uuid), player);
+            ResourcePack pack = PackLoader.PACKS.get(uuid);
+            if (pack != null) {
+                createPackButton(pack, player, order);
+                order += 10;
+            }
         }
 
-        add(new Button(ChatColor.BOLD + player.translate("pack.available.title"), () -> {
-            player.sendForm(new PackMenu());
-        }));
+        MenuButtonFactory.add(this, player, "packs.available", order, ChatColor.BOLD + player.translate("pack.available.title"), null, null, () -> player.sendForm(new PackMenu()));
+        order += 10;
 
-        PackLoader.PACKS.forEach((uuid, pack)->{
-            if (!selectedPacks.contains(uuid)){
-                createPackButton(pack, player);
+        for (var entry : PackLoader.PACKS.entrySet()) {
+            if (!selectedPacks.contains(entry.getKey())) {
+                createPackButton(entry.getValue(), player, order);
+                order += 10;
             }
-        });
+        }
 
         return super.create(player);
     }
@@ -51,10 +56,10 @@ public class PackMenu extends BedrockMenu {
         }
     }
 
-    private void createPackButton(ResourcePack pack, ExtrasPlayer player) {
-        this.add(new Button(pack.manifest().header().name(), () -> {
+    private void createPackButton(ResourcePack pack, ExtrasPlayer player, int defaultOrder) {
+        MenuButtonFactory.add(this, player, "packs.pack", defaultOrder, pack.manifest().header().name(), null, null, () -> {
             openingSubMenu = true;
             player.sendForm(new PackManagerMenu(pack));
-        }));
+        });
     }
 }

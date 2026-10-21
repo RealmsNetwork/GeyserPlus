@@ -1,5 +1,7 @@
 package dev.letsgoaway.geyserextras.core.menus.settings.menus;
 
+import static dev.letsgoaway.geyserextras.core.GeyserExtras.GE;
+
 import dev.letsgoaway.geyserextras.core.ExtrasPlayer;
 import dev.letsgoaway.geyserextras.core.form.BedrockForm;
 import dev.letsgoaway.geyserextras.core.form.elements.Label;
@@ -14,11 +16,11 @@ import java.util.List;
 public class InGameSettingsMenu extends BedrockForm {
     @Override
     public CustomForm.Builder create(ExtrasPlayer player) {
-        setTitle(player.translateGE("ge.settings"));
+        setTitle(GE.getConfig().menuTitle("settings.ingame", player.translateGE("ge.settings")));
         GeyserSession session = player.getSession();
         List<Section> sections = Settings.list();
 
-        add(new Label(player.translateGE("ge.settings.reset.ingame")));
+        add(new Label(GE.getConfig().menuContent("settings.ingame", player.translateGE("ge.settings.reset.ingame"))));
 
         for (Section section : sections) {
             section.create(this, session, player, true);

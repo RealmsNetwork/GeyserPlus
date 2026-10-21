@@ -156,7 +156,34 @@ public class ExtrasPlayer {
     }
 
     public void reconnect() {
-        session.transfer(session.joinAddress(), session.joinPort());
+        GeyserSession current = this.session;
+        if (current == null) {
+            SERVER.warn("Skipped GeyserPlus reconnect because the Geyser session is unavailable.");
+            return;
+        }
+
+        final String address;
+        final int port;
+        try {
+            // joinAddress/joinPort rely on the upstream login data; disconnect and shutdown events
+            // can run before that data exists (including the Education Edition failure path).
+            address = current.joinAddress();
+            port = current.joinPort();
+        } catch (RuntimeException exception) {
+            SERVER.debugWarn("Skipped GeyserPlus reconnect because the upstream address is not available yet.");
+            return;
+        }
+
+        if (address == null || address.isBlank() || port < 1 || port > 65535) {
+            SERVER.warn("Skipped GeyserPlus reconnect because the upstream address or port is invalid.");
+            return;
+        }
+
+        try {
+            current.transfer(address.trim(), port);
+        } catch (RuntimeException exception) {
+            SERVER.warn("GeyserPlus could not start the reconnect transfer: " + exception.getClass().getSimpleName());
+        }
     }
 
 
@@ -280,14 +307,18 @@ public class ExtrasPlayer {
     }
 
     public String translate(String lang) {
-        return MinecraftLocale.getLocaleString(lang, session.locale());
+        String translated = MinecraftLocale.getLocaleString(lang, session.locale());
+        return GE.getConfig() == null ? translated : GE.getConfig().textOverride(lang, translated);
     }
 
     public String translateGE(String lang) {
-        return GELocale.translate(lang, session.locale());
+        String translated = GELocale.translate(lang, session.locale());
+        return GE.getConfig() == null ? translated : GE.getConfig().textOverride(lang, translated);
     }
+
     public String translateOtherwiseGE(String lang, String otherwise) {
-        return GELocale.translateOtherwise(lang, otherwise, session.locale());
+        String translated = GELocale.translateOtherwise(lang, otherwise, session.locale());
+        return GE.getConfig() == null ? translated : GE.getConfig().textOverride(lang, translated);
     }
 
     @Nullable

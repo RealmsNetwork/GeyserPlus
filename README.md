@@ -78,3 +78,8 @@ Requires a JDK 21 toolchain. Artifacts land in each module's `build/libs/` (`Gey
 
 ### Java features
 - [Geyser Recipe Fix](https://modrinth.com/plugin/geyser-recipe-fix) - Fixes smithing table recipes to work properly on Bedrock
+
+
+## Server owner customization
+
+GeyserPlus supports configurable menu titles, form content, button visibility, disabled-state labels/icons/messages, icon paths or URLs, ordering, settings-section buttons, and translation-key overrides. See [the server menu customization guide](docs/server-menu-customization.md) for all keys and examples.

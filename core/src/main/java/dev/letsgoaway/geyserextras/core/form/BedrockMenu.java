@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.geysermc.cumulus.form.SimpleForm;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class BedrockMenu {
@@ -31,7 +32,12 @@ public class BedrockMenu {
     }
 
     public BedrockMenu add(Button button) {
-        buttons.add(button);
+        if (button != null) {
+            if (button.getSortOrder() == Integer.MIN_VALUE) {
+                button.setSortOrder(buttons.size() * 10);
+            }
+            buttons.add(button);
+        }
         return this;
     }
 
@@ -39,13 +45,22 @@ public class BedrockMenu {
         simpleForm = SimpleForm.builder();
         simpleForm.title(this.title)
                 .content(this.header);
-        for (Button button : buttons) {
+        List<Button> orderedButtons = new ArrayList<>(buttons);
+        orderedButtons.sort(Comparator.comparingInt(Button::getSortOrder));
+        for (Button button : orderedButtons) {
             simpleForm.button(button.get());
         }
         simpleForm.validResultHandler(response -> {
-            for (Button button : buttons) {
-                if (response.clickedButtonId() == buttons.indexOf(button)) {
-                    button.onSelect.run();
+            int clicked = response.clickedButtonId();
+            if (clicked < 0 || clicked >= orderedButtons.size()) {
+                // Ignore malformed button IDs without invoking close handlers or menu actions.
+                return;
+            }
+            Button button = orderedButtons.get(clicked);
+            if (button.onSelect != null) {
+                button.onSelect.run();
+                // A visually disabled button must not trigger menu-specific post-click actions.
+                if (!button.isDisabled()) {
                     onButtonClick(player);
                 }
             }
