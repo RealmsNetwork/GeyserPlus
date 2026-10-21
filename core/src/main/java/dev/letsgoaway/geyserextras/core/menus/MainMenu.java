@@ -14,7 +14,6 @@ import dev.letsgoaway.geyserextras.core.preferences.bindings.Action;
 import org.geysermc.cumulus.form.SimpleForm;
 import org.geysermc.cumulus.util.FormImage;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -75,27 +74,28 @@ public class MainMenu extends BedrockMenu {
         if (!available && !config.isShowWhenUnavailable() && !config.isDisabled()) return sequence + 1;
 
         boolean disabled = config.isDisabled() || !available;
-        String title = nonBlank(config.getTitle(), defaultTitle);
-        String imageType = nonBlank(config.getImageType(), defaultImageType);
-        String image = nonBlank(config.getImage(), defaultImage);
+        String title = MenuButtonPolicy.nonBlank(config.getTitle(), defaultTitle);
+        String imageType = MenuButtonPolicy.nonBlank(config.getImageType(), defaultImageType);
+        String image = MenuButtonPolicy.nonBlank(config.getImage(), defaultImage);
         Runnable callback = action;
         if (disabled) {
-            title = nonBlank(config.getDisabledTitle(), title + " §c(Disabled)");
-            imageType = nonBlank(config.getDisabledImageType(), imageType);
-            image = nonBlank(config.getDisabledImage(), image);
+            title = MenuButtonPolicy.nonBlank(config.getDisabledTitle(), title + " §c(Disabled)");
+            imageType = MenuButtonPolicy.nonBlank(config.getDisabledImageType(), imageType);
+            image = MenuButtonPolicy.nonBlank(config.getDisabledImage(), image);
             String message = config.getDisabledMessage();
             callback = () -> {
                 if (message != null && !message.isBlank()) player.sendMessage(message);
             };
         }
 
-        FormImage.Type type = parseImageType(imageType);
-        String safeTitle = limit(title, 256);
-        String safeImage = limit(image, 2048);
-        if (!validImage(type, safeImage)) {
-            type = null;
+        String validatedImageType = MenuButtonPolicy.parseImageType(imageType);
+        String safeTitle = MenuButtonPolicy.limit(title, 256);
+        String safeImage = MenuButtonPolicy.limit(image, 2048);
+        if (!MenuButtonPolicy.validImage(validatedImageType, safeImage)) {
+            validatedImageType = null;
             safeImage = "";
         }
+        FormImage.Type type = validatedImageType == null ? null : FormImage.Type.valueOf(validatedImageType);
         Button button = type == null || safeImage.isBlank()
                 ? new Button(safeTitle, callback)
                 : new Button(safeTitle, type, safeImage, callback);
@@ -103,42 +103,6 @@ public class MainMenu extends BedrockMenu {
         int order = config.getSortOrder() == Integer.MIN_VALUE ? (sequence + 1) * 10 : config.getSortOrder();
         target.add(new OrderedButton(order, sequence, button));
         return sequence + 1;
-    }
-
-    private static FormImage.Type parseImageType(String value) {
-        if (value == null || value.isBlank() || "NONE".equalsIgnoreCase(value.trim())) return null;
-        try {
-            return FormImage.Type.valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
-        } catch (IllegalArgumentException ignored) {
-            return null;
-        }
-    }
-
-    private static boolean validImage(FormImage.Type type, String image) {
-        if (type == null || image == null || image.isBlank()) return false;
-        if (type == FormImage.Type.PATH) {
-            return !image.startsWith("/") && !image.contains("\\") && !image.contains("..")
-                    && image.matches("[A-Za-z0-9_./-]+");
-        }
-        if (type == FormImage.Type.URL) {
-            try {
-                URI uri = URI.create(image.trim());
-                return ("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))
-                        && uri.getHost() != null && !uri.getHost().isBlank();
-            } catch (IllegalArgumentException ignored) {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    private static String nonBlank(String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value.trim();
-    }
-
-    private static String limit(String value, int max) {
-        if (value == null) return "";
-        return value.length() <= max ? value : value.substring(0, max);
     }
 
     private record OrderedButton(int order, int sequence, Button button) { }

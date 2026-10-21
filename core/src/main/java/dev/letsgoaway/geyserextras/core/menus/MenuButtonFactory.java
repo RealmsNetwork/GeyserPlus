@@ -5,8 +5,6 @@ import dev.letsgoaway.geyserextras.core.config.GeyserExtrasConfig.MenuButtonConf
 import dev.letsgoaway.geyserextras.core.form.elements.Button;
 import org.geysermc.cumulus.util.FormImage;
 
-import java.net.URI;
-
 import static dev.letsgoaway.geyserextras.core.GeyserExtras.GE;
 
 /** Builds buttons using the server owner's label, icon, disabled-state and ordering overrides. */
@@ -20,27 +18,28 @@ public final class MenuButtonFactory {
         MenuButtonConfig config = GE.getConfig().menuSettings().button(key, defaultOrder, imageType, defaultImage);
         if (!config.isEnabled()) return null;
 
-        String title = nonBlank(config.getTitle(), defaultTitle);
-        String configuredImageType = nonBlank(config.getImageType(), imageType);
-        String image = nonBlank(config.getImage(), defaultImage);
+        String title = MenuButtonPolicy.nonBlank(config.getTitle(), defaultTitle);
+        String configuredImageType = MenuButtonPolicy.nonBlank(config.getImageType(), imageType);
+        String image = MenuButtonPolicy.nonBlank(config.getImage(), defaultImage);
         Runnable callback = action == null ? () -> { } : action;
         if (config.isDisabled()) {
-            title = nonBlank(config.getDisabledTitle(), title + " §c(Disabled)");
-            configuredImageType = nonBlank(config.getDisabledImageType(), configuredImageType);
-            image = nonBlank(config.getDisabledImage(), image);
+            title = MenuButtonPolicy.nonBlank(config.getDisabledTitle(), title + " §c(Disabled)");
+            configuredImageType = MenuButtonPolicy.nonBlank(config.getDisabledImageType(), configuredImageType);
+            image = MenuButtonPolicy.nonBlank(config.getDisabledImage(), image);
             String message = config.getDisabledMessage();
             callback = () -> {
                 if (message != null && !message.isBlank()) player.sendMessage(message);
             };
         }
 
-        FormImage.Type type = parseImageType(configuredImageType);
-        String safeTitle = limit(title, 256);
-        String safeImage = limit(image, 2048);
-        if (!validImage(type, safeImage)) {
-            type = null;
+        String validatedImageType = MenuButtonPolicy.parseImageType(configuredImageType);
+        String safeTitle = MenuButtonPolicy.limit(title, 256);
+        String safeImage = MenuButtonPolicy.limit(image, 2048);
+        if (!MenuButtonPolicy.validImage(validatedImageType, safeImage)) {
+            validatedImageType = null;
             safeImage = "";
         }
+        FormImage.Type type = validatedImageType == null ? null : FormImage.Type.valueOf(validatedImageType);
         Button button = type == null || safeImage.isBlank()
                 ? new Button(safeTitle, callback)
                 : new Button(safeTitle, type, safeImage, callback);
@@ -54,41 +53,5 @@ public final class MenuButtonFactory {
                            String defaultImage, Runnable action) {
         Button button = create(player, key, defaultOrder, defaultTitle, defaultImageType, defaultImage, action);
         if (button != null) menu.add(button);
-    }
-
-    private static FormImage.Type parseImageType(String value) {
-        if (value == null || value.isBlank() || "NONE".equalsIgnoreCase(value.trim())) return null;
-        try {
-            return FormImage.Type.valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
-        } catch (IllegalArgumentException ignored) {
-            return null;
-        }
-    }
-
-    private static boolean validImage(FormImage.Type type, String image) {
-        if (type == null || image == null || image.isBlank()) return false;
-        if (type == FormImage.Type.PATH) {
-            return !image.startsWith("/") && !image.contains("\\") && !image.contains("..")
-                    && image.matches("[A-Za-z0-9_./-]+");
-        }
-        if (type == FormImage.Type.URL) {
-            try {
-                URI uri = URI.create(image.trim());
-                return ("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))
-                        && uri.getHost() != null && !uri.getHost().isBlank();
-            } catch (IllegalArgumentException ignored) {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    private static String nonBlank(String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value.trim();
-    }
-
-    private static String limit(String value, int max) {
-        if (value == null) return "";
-        return value.length() <= max ? value : value.substring(0, max);
     }
 }
