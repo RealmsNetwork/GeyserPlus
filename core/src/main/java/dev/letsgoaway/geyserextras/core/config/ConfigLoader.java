@@ -18,7 +18,7 @@ import static dev.letsgoaway.geyserextras.core.GeyserExtras.SERVER;
 
 public class ConfigLoader {
 
-    public static final int LATEST_VERSION = 4;
+    public static final int LATEST_VERSION = 6;
     private static final String HEADER = """
             GeyserExtras
             If Geyser is detected, all required config changes will be automatically applied.
@@ -30,6 +30,7 @@ public class ConfigLoader {
             .addVersion(3, twoToThree())
             .addVersion(4, threeToFour())
             .addVersion(5, fourToFive())
+            .addVersion(6, fiveToSix())
 
             .build();
 
@@ -131,5 +132,10 @@ public class ConfigLoader {
         return ConfigurationTransformation.builder()
                 .addAction(NodePath.path("enable-custom-cooldown"), TransformAction.remove())
                 .build();
+    }
+
+    // Menu customization adds only optional values; default values keep existing installations unchanged.
+    private static ConfigurationTransformation fiveToSix() {
+        return ConfigurationTransformation.builder().build();
     }
 }

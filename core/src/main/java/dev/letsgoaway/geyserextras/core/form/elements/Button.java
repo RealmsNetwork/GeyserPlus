@@ -13,6 +13,8 @@ public class Button extends FormElement {
     public FormImage.Type type;
     public String data;
     public Runnable onSelect;
+    private int sortOrder = Integer.MIN_VALUE;
+    private boolean disabled;
 
     public Button(String text, FormImage.Type type, String data, Runnable onSelect) {
         this.text = text;
@@ -36,6 +38,24 @@ public class Button extends FormElement {
     @Override
     public void resultRecieved(Object... args) {
 
+    }
+
+    public int getSortOrder() {
+        return sortOrder;
+    }
+
+    public Button setSortOrder(int sortOrder) {
+        this.sortOrder = sortOrder;
+        return this;
+    }
+
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    public Button setDisabled(boolean disabled) {
+        this.disabled = disabled;
+        return this;
     }
 
     public ButtonComponent get() {

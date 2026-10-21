@@ -35,7 +35,7 @@ public class PackSettingsMenu extends BedrockForm {
 
     @Override
     public CustomForm.Builder create(ExtrasPlayer player) {
-        setTitle(this.pack.manifest().header().name() + " " + "Settings");
+        setTitle(GE.getConfig().menuTitle("packs.settings", this.pack.manifest().header().name() + " Settings"));
         ArrayList<String> packNames = getSubpackNames(pack);
 
         String defaultPack = packNames.get(packNames.size() - 1);

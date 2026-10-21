@@ -6,7 +6,9 @@ import org.spongepowered.configurate.objectmapping.meta.Comment;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("FieldMayBeFinal")
 @ConfigSerializable
@@ -129,6 +131,126 @@ public final class GeyserExtrasConfig {
 
     @Comment("Only enable if you know what you are doing.")
     private boolean debugMode = false;
+
+    @Comment("""
+            Owner-facing menu customization. Titles left blank keep GeyserExtras' translated default.
+            Menu button keys: swap-offhand, reconnect, settings, advancements, statistics, player-list,
+            server-links, resource-packs. Set enabled=false to hide an entry. Set disabled=true to show
+            the configured disabled label/icon without running its action. sort-order controls button order.
+            Image types are PATH, URL, or NONE. URL icons must be reachable by the Bedrock client.
+            """)
+    private MenuSettings menus = new MenuSettings();
+
+    public MenuSettings menuSettings() {
+        if (menus == null) menus = new MenuSettings();
+        return menus;
+    }
+
+    public String menuTitle(String key, String fallback) {
+        return menuSettings().title(key, fallback);
+    }
+
+    public String menuContent(String key, String fallback) {
+        return menuSettings().content(key, fallback);
+    }
+
+    public String textOverride(String key, String fallback) {
+        return menuSettings().text(key, fallback);
+    }
+
+    @ConfigSerializable
+    @Getter
+    public static final class MenuSettings {
+        @Comment("Override menu titles by key. Supported keys include main, settings, settings.ingame, packs, server-links, player-list.")
+        private Map<String, String> titleOverrides = new LinkedHashMap<>();
+
+        @Comment("Main menu description/content. Leave blank to keep it empty.")
+        private String mainContent = "";
+
+        @Comment("Content/header overrides by menu key. Missing or blank entries preserve the built-in text.")
+        private Map<String, String> contentOverrides = new LinkedHashMap<>();
+
+        @Comment("Overrides any string passed through ExtrasPlayer.translate/translateGE, keyed by its translation key.")
+        private Map<String, String> textOverrides = new LinkedHashMap<>();
+
+        @Comment("Main menu button overrides. Missing entries use built-in defaults.")
+        private Map<String, MenuButtonConfig> buttons = defaultButtons();
+
+        public String title(String key, String fallback) {
+            if (titleOverrides == null) return fallback;
+            String value = titleOverrides.get(key);
+            return value == null || value.isBlank() ? fallback : value;
+        }
+
+        public String content(String key, String fallback) {
+            if (contentOverrides != null) {
+                String value = contentOverrides.get(key);
+                if (value != null && !value.isBlank()) return value;
+            }
+            return fallback == null ? "" : fallback;
+        }
+
+        public String text(String key, String fallback) {
+            if (textOverrides != null) {
+                String value = textOverrides.get(key);
+                if (value != null && !value.isBlank()) return value;
+            }
+            return fallback == null ? "" : fallback;
+        }
+
+        public MenuButtonConfig button(String key, int fallbackOrder, String fallbackImageType, String fallbackImage) {
+            MenuButtonConfig value = buttons == null ? null : buttons.get(key);
+            return value == null ? MenuButtonConfig.defaults(fallbackOrder, fallbackImageType, fallbackImage) : value;
+        }
+
+        private static Map<String, MenuButtonConfig> defaultButtons() {
+            Map<String, MenuButtonConfig> values = new LinkedHashMap<>();
+            values.put("swap-offhand", MenuButtonConfig.defaults(10, "PATH", "textures/ui/move.png"));
+            values.put("reconnect", MenuButtonConfig.defaults(20, "PATH", "textures/ui/refresh_hover.png"));
+            values.put("settings", MenuButtonConfig.defaults(30, "PATH", "textures/ui/settings_glyph_color_2x.png"));
+            values.put("advancements", MenuButtonConfig.defaults(40, "PATH", "textures/ui/achievements.png"));
+            values.put("statistics", MenuButtonConfig.defaults(50, "PATH", "textures/ui/world_glyph_color_2x_black_outline.png"));
+            values.put("player-list", MenuButtonConfig.defaults(60, "PATH", "textures/ui/Local.png"));
+            values.put("server-links", MenuButtonConfig.defaults(70, "PATH", "textures/ui/external_link.png"));
+            values.put("resource-packs", MenuButtonConfig.defaults(80, "PATH", "textures/ui/glyph_resource_pack.png"));
+            return values;
+        }
+    }
+
+    @ConfigSerializable
+    @Getter
+    public static final class MenuButtonConfig {
+        @Comment("Set false to hide this button completely.")
+        private boolean enabled = true;
+        @Comment("Show the button as disabled. Its normal action will not run.")
+        private boolean disabled = false;
+        @Comment("Show a disabled placeholder when the feature is unavailable (for example, no server links exist).")
+        private boolean showWhenUnavailable = false;
+        @Comment("Sort order; lower numbers appear first.")
+        private int sortOrder = Integer.MIN_VALUE;
+        @Comment("Label override. Blank keeps the translated built-in label.")
+        private String title = "";
+        @Comment("Icon type: PATH, URL, or NONE. Blank keeps the built-in icon type.")
+        private String imageType = "";
+        @Comment("Icon value/path/URL. Blank keeps the built-in icon.")
+        private String image = "";
+        @Comment("Label shown while disabled. Blank generates a disabled label from the normal title.")
+        private String disabledTitle = "";
+        @Comment("Disabled icon type: PATH, URL, or NONE. Blank keeps the normal icon type.")
+        private String disabledImageType = "";
+        @Comment("Disabled icon value/path/URL. Blank keeps the normal icon.")
+        private String disabledImage = "";
+        @Comment("Message sent when a disabled button is clicked. Blank makes the disabled button silent.")
+        private String disabledMessage = "This option is currently unavailable.";
+
+        private static MenuButtonConfig defaults(int order, String imageType, String image) {
+            MenuButtonConfig value = new MenuButtonConfig();
+            value.sortOrder = order;
+            value.imageType = imageType;
+            value.image = image;
+            return value;
+        }
+    }
 
     @Comment("The version of the config. DO NOT CHANGE!")
     private int version = ConfigLoader.LATEST_VERSION;

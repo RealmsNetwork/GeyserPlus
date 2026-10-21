@@ -1,4 +1,5 @@
 dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
     implementation("org.spongepowered:configurate-yaml:4.2.0-GeyserMC-SNAPSHOT")
     shadow("org.spongepowered:configurate-yaml:4.2.0-GeyserMC-SNAPSHOT")
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.17.0")
@@ -28,3 +29,6 @@ tasks {
     }
 }
 
+tasks.test {
+    useJUnitPlatform()
+}

@@ -1,6 +1,9 @@
 package dev.letsgoaway.geyserextras.core.parity.java.menus.packs;
 
+import static dev.letsgoaway.geyserextras.core.GeyserExtras.GE;
+
 import dev.letsgoaway.geyserextras.core.ExtrasPlayer;
+import dev.letsgoaway.geyserextras.core.menus.MenuButtonFactory;
 import dev.letsgoaway.geyserextras.core.form.BedrockMenu;
 import dev.letsgoaway.geyserextras.core.form.elements.Button;
 import dev.letsgoaway.geyserextras.core.locale.BedrockLocale;
@@ -27,30 +30,22 @@ public class PackManagerMenu extends BedrockMenu {
     @Override
     public SimpleForm create(ExtrasPlayer player) {
         ResourcePackManifest.Header header = pack.manifest().header();
-        setTitle(header.name());
+        setTitle(GE.getConfig().menuTitle("packs.manager", header.name()));
         String info = header.description() + "\n\n" + "%manifestvalidation.packid " + header.uuid() + "\n" +
                 "%manifestvalidation.packversion " + header.version().toString() + "\n";
-        setHeader(info);
+        setHeader(GE.getConfig().menuContent("packs.manager", info));
 
 
         if (!player.getPreferences().getSelectedPacks().contains(packID)) {
-            add(new Button(BedrockLocale.PACKS.SELECT, FormImage.Type.PATH, "textures/ui/plus.png", () -> {
-                addPack(player);
-            }));
+            MenuButtonFactory.add(this, player, "packs.select", 10, BedrockLocale.PACKS.SELECT, FormImage.Type.PATH, "textures/ui/plus.png", () -> addPack(player));
         } else {
             int pos = player.getPreferences().getSelectedPacks().indexOf(packID);
             if (pos != 0) {
-                add(new Button(BedrockLocale.PACKS.UP, FormImage.Type.PATH, "textures/ui/up_arrow.png", () -> {
-                    up(player);
-                }));
+                MenuButtonFactory.add(this, player, "packs.up", 10, BedrockLocale.PACKS.UP, FormImage.Type.PATH, "textures/ui/up_arrow.png", () -> up(player));
             }
-            add(new Button(BedrockLocale.PACKS.REMOVE, FormImage.Type.PATH, "textures/ui/minus.png", () -> {
-                removePack(player);
-            }));
+            MenuButtonFactory.add(this, player, "packs.remove", 20, BedrockLocale.PACKS.REMOVE, FormImage.Type.PATH, "textures/ui/minus.png", () -> removePack(player));
             if (pos != player.getPreferences().getSelectedPacks().size() - 1) {
-                add(new Button(BedrockLocale.PACKS.DOWN, FormImage.Type.PATH, "textures/ui/down_arrow.png", () -> {
-                    down(player);
-                }));
+                MenuButtonFactory.add(this, player, "packs.down", 30, BedrockLocale.PACKS.DOWN, FormImage.Type.PATH, "textures/ui/down_arrow.png", () -> down(player));
             }
             /*
             if (!pack.manifest().subpacks().isEmpty()) {
